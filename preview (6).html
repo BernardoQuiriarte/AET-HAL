@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tablero Interactivo LET | Hospital Ángeles Lomas</title>
+<style>
+:root{
+  --ha-blue:#005A9C;
+  --ha-cyan:#00A6C8;
+  --ha-light:#EAF7FB;
+  --ha-soft:#F6FAFC;
+  --ha-silver:#D9E2EC;
+  --ha-ink:#17324D;
+  --ha-muted:#66788A;
+  --ha-green:#7AC7A4;
+  --ha-gold:#F2C76E;
+  --ha-rose:#F7A6A6;
+  --ha-purple:#B9A7F2;
+  --white:#ffffff;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(0,166,200,.20), transparent 34%),
+    radial-gradient(circle at top right, rgba(0,90,156,.16), transparent 36%),
+    linear-gradient(135deg,#f8fbfd 0%,#eef7fb 100%);
+  color:var(--ha-ink);
+}
+.app{
+  max-width:1280px;
+  margin:0 auto;
+  padding:28px;
+}
+.hero{
+  position:relative;
+  overflow:hidden;
+  border-radius:34px;
+  padding:34px;
+  background:linear-gradient(135deg,rgba(0,90,156,.96),rgba(0,166,200,.92));
+  color:#fff;
+  box-shadow:0 24px 70px rgba(0,90,156,.26);
+}
+.hero:after{
+  content:"";
+  position:absolute;
+  right:-80px; top:-90px;
+  width:300px; height:300px;
+  border-radius:999px;
+  background:rgba(255,255,255,.15);
+}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 13px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.28);
+  font-size:13px;
+  font-weight:700;
+}
+h1{font-size:clamp(31px,4vw,56px);line-height:1;margin:18px 0 12px;letter-spacing:-1.4px}
+.hero p{max-width:980px;font-size:17px;line-height:1.65;margin:0;color:rgba(255,255,255,.92)}
+.hero-grid{
+  display:grid;
+  grid-template-columns:1.5fr .9fr;
+  gap:22px;
+  margin-top:24px;
+  position:relative;
+  z-index:1;
+}
+.hero-panel{
+  border-radius:24px;
+  background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.25);
+  padding:22px;
+  backdrop-filter:blur(10px);
+}
+.hero-panel b{display:block;font-size:15px;margin-bottom:7px}
+.hero-panel span{display:block;color:rgba(255,255,255,.86);font-size:14px;line-height:1.45}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+  margin:22px 0;
+}
+.kpi{
+  background:rgba(255,255,255,.82);
+  border:1px solid rgba(0,90,156,.10);
+  border-radius:26px;
+  padding:22px;
+  box-shadow:0 16px 46px rgba(31,63,92,.09);
+  cursor:pointer;
+  transition:.25s ease;
+}
+.kpi:hover{transform:translateY(-5px);box-shadow:0 22px 55px rgba(0,90,156,.15)}
+.kpi .icon{
+  width:44px;height:44px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--ha-light);
+  color:var(--ha-blue);
+  font-size:23px;
+}
+.kpi h3{font-size:31px;margin:14px 0 2px;color:var(--ha-blue)}
+.kpi p{margin:0;color:var(--ha-muted);font-size:14px;line-height:1.45}
+
+.tabs-shell{
+  margin-top:18px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(0,90,156,.10);
+  border-radius:30px;
+  padding:18px;
+  box-shadow:0 20px 64px rgba(31,63,92,.09);
+}
+.tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:18px;
+}
+.tab{
+  border:none;
+  border-radius:999px;
+  padding:12px 16px;
+  background:#fff;
+  color:var(--ha-ink);
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(31,63,92,.07);
+  transition:.2s ease;
+}
+.tab:hover{transform:translateY(-2px)}
+.tab.active{background:linear-gradient(135deg,var(--ha-blue),var(--ha-cyan));color:#fff}
+.panel{display:none;animation:fade .24s ease}
+.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.content-grid{
+  display:grid;
+  grid-template-columns:1.05fr .95fr;
+  gap:18px;
+}
+.card{
+  background:#fff;
+  border:1px solid rgba(0,90,156,.10);
+  border-radius:26px;
+  padding:22px;
+  box-shadow:0 14px 38px rgba(31,63,92,.08);
+}
+.card h2,.card h3{margin-top:0}
+.card h2{font-size:25px;letter-spacing:-.4px;color:var(--ha-blue)}
+.card h3{font-size:18px;color:var(--ha-ink)}
+.card p,.card li{line-height:1.64;color:#40556B}
+.card ul{padding-left:20px}
+.mini-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+}
+.flip{
+  min-height:180px;
+  perspective:1000px;
+  cursor:pointer;
+}
+.flip-inner{
+  position:relative;
+  height:100%;
+  min-height:180px;
+  transform-style:preserve-3d;
+  transition:transform .55s ease;
+}
+.flip.flipped .flip-inner{transform:rotateY(180deg)}
+.flip-face{
+  position:absolute;
+  inset:0;
+  backface-visibility:hidden;
+  border-radius:24px;
+  padding:20px;
+  border:1px solid rgba(0,90,156,.12);
+  box-shadow:0 12px 30px rgba(31,63,92,.08);
+}
+.front{
+  background:linear-gradient(145deg,#ffffff,#eff9fc);
+}
+.back{
+  transform:rotateY(180deg);
+  background:linear-gradient(145deg,var(--ha-blue),var(--ha-cyan));
+  color:#fff;
+}
+.front .pill{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:900;
+  font-size:12px;
+  background:var(--ha-light);
+  color:var(--ha-blue);
+}
+.flip h3{margin:14px 0 8px}
+.flip p{margin:0;font-size:14px}
+.back p{color:rgba(255,255,255,.93)}
+.timeline{
+  position:relative;
+  padding-left:20px;
+}
+.timeline:before{
+  content:"";
+  position:absolute;left:6px;top:8px;bottom:8px;width:3px;background:linear-gradient(var(--ha-blue),var(--ha-cyan));border-radius:8px
+}
+.step{
+  position:relative;
+  margin:0 0 16px;
+  padding:16px 16px 16px 20px;
+  border-radius:20px;
+  background:var(--ha-soft);
+  border:1px solid rgba(0,90,156,.09);
+}
+.step:before{
+  content:"";
+  position:absolute;left:-20px;top:22px;width:15px;height:15px;border-radius:999px;background:#fff;border:4px solid var(--ha-cyan)
+}
+.step b{color:var(--ha-blue)}
+.searchbar{
+  width:100%;
+  border:1px solid rgba(0,90,156,.16);
+  border-radius:18px;
+  padding:14px 16px;
+  font-size:15px;
+  outline:none;
+  margin-bottom:12px;
+}
+.table-wrap{overflow:auto;border-radius:22px;border:1px solid rgba(0,90,156,.12)}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{text-align:left;padding:14px;border-bottom:1px solid #e8eef5;vertical-align:top}
+th{background:#edf8fc;color:var(--ha-blue);font-size:13px}
+tr:hover td{background:#fbfdff}
+.tag{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+  color:var(--ha-blue);
+  background:var(--ha-light);
+}
+.chart{
+  display:flex;
+  align-items:flex-end;
+  gap:14px;
+  height:260px;
+  padding:18px;
+  border-radius:24px;
+  background:linear-gradient(180deg,#ffffff,#f2f9fc);
+  border:1px solid rgba(0,90,156,.10);
+}
+.bar{
+  flex:1;
+  min-width:64px;
+  border-radius:18px 18px 10px 10px;
+  background:linear-gradient(180deg,var(--ha-cyan),var(--ha-blue));
+  position:relative;
+  cursor:pointer;
+  transition:.25s ease;
+}
+.bar:hover{filter:saturate(1.2);transform:translateY(-4px)}
+.bar span{
+  position:absolute;
+  bottom:100%;
+  left:50%;
+  transform:translateX(-50%);
+  margin-bottom:8px;
+  background:#fff;
+  border:1px solid rgba(0,90,156,.12);
+  border-radius:999px;
+  padding:6px 9px;
+  font-size:12px;
+  font-weight:900;
+  color:var(--ha-blue);
+  white-space:nowrap;
+}
+.bar label{
+  position:absolute;
+  top:calc(100% + 10px);
+  left:50%;
+  transform:translateX(-50%);
+  font-size:12px;
+  color:var(--ha-muted);
+  text-align:center;
+  width:90px;
+}
+.notice{
+  border-left:5px solid var(--ha-cyan);
+  background:#effaff;
+  border-radius:18px;
+  padding:16px;
+  color:#40556B;
+}
+.footer{
+  margin-top:22px;
+  border-radius:30px;
+  padding:24px;
+  background:#fff;
+  border:1px solid rgba(0,90,156,.10);
+  box-shadow:0 16px 46px rgba(31,63,92,.08);
+}
+.references{
+  font-size:13px;
+  color:#40556B;
+  line-height:1.6;
+}
+.small{font-size:12px;color:var(--ha-muted)}
+@media(max-width:900px){
+  .hero-grid,.content-grid{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:620px){
+  .app{padding:14px}
+  .stats,.mini-grid{grid-template-columns:1fr}
+  .hero{padding:24px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="hero">
+    <span class="badge">🏥 Hospital Ángeles Lomas · UTI-UCC / UCI</span>
+    <h1>Tablero Interactivo de Limitación del Esfuerzo Terapéutico</h1>
+    <p>
+      Visualización ejecutiva del procedimiento LET para integrar los componentes clínicos, éticos, legales,
+      comunicacionales y documentales en un formato navegable. Diseñado para revisión rápida, capacitación
+      y consulta operativa del equipo de Terapia Intensiva, Cuidados Coronarios y Cuidados Intermedios.
+    </p>
+    <div class="hero-grid">
+      <div class="hero-panel">
+        <b>Propósito central</b>
+        <span>Evitar la obstinación terapéutica, favorecer decisiones compartidas y garantizar confort, dignidad y seguridad en pacientes terminales o con pronóstico irreversible.</span>
+      </div>
+      <div class="hero-panel">
+        <b>Documento base</b>
+        <span>Manual de Políticas y Procedimientos · Revisión 2 · Abril 2017 · Código MP-DSC-UTI-LET-01.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="kpi" onclick="openTab('resumen')"><div class="icon">🎯</div><h3>1</h3><p>Objetivo rector: decisiones clínicas proporcionales, centradas en el paciente y su familia.</p></div>
+    <div class="kpi" onclick="openTab('niveles')"><div class="icon">🧭</div><h3>4</h3><p>Niveles de clasificación clínica para orientar RCP, no RCP y proporcionalidad terapéutica.</p></div>
+    <div class="kpi" onclick="openTab('dominios')"><div class="icon">🌿</div><h3>7</h3><p>Dominios de calidad del tratamiento paliativo en el paciente crítico.</p></div>
+    <div class="kpi" onclick="openTab('legal')"><div class="icon">⚖️</div><h3>166 Bis</h3><p>Marco legal mexicano sobre cuidados paliativos, derechos, obligaciones y límites.</p></div>
+  </section>
+
+  <section class="tabs-shell">
+    <div class="tabs">
+      <button class="tab active" onclick="openTab('resumen')">Resumen</button>
+      <button class="tab" onclick="openTab('flujo')">Flujo LET</button>
+      <button class="tab" onclick="openTab('niveles')">Clasificación</button>
+      <button class="tab" onclick="openTab('dominios')">Calidad paliativa</button>
+      <button class="tab" onclick="openTab('legal')">Marco legal</button>
+      <button class="tab" onclick="openTab('sedacion')">Sedación paliativa</button>
+      <button class="tab" onclick="openTab('checklist')">Checklist</button>
+    </div>
+
+    <div id="resumen" class="panel active">
+      <div class="content-grid">
+        <div class="card">
+          <h2>Resumen ejecutivo del procedimiento</h2>
+          <p>
+            La Limitación del Esfuerzo Terapéutico se plantea cuando la condición clínica del paciente,
+            el pronóstico, la irreversibilidad del proceso o la ausencia de beneficio razonable hacen que
+            las medidas extraordinarias ya no aporten recuperación ni calidad de vida. El enfoque no es
+            abandonar al paciente, sino modificar la meta terapéutica: de curar o prolongar de forma fútil,
+            a aliviar síntomas, procurar confort, acompañar a la familia y preservar una muerte digna.
+          </p>
+          <p>
+            El procedimiento requiere deliberación compartida entre médico tratante, interconsultantes,
+            especialista en medicina intensiva responsable en turno, equipo de salud, paciente cuando sea
+            posible, familiares o representante legal. Toda decisión debe quedar asentada en expediente,
+            incluyendo el razonamiento clínico, los acuerdos, las órdenes específicas y el consentimiento
+            correspondiente.
+          </p>
+          <div class="notice"><b>Idea clave:</b> LET no significa “no tratar”; significa no iniciar o retirar intervenciones desproporcionadas, manteniendo cuidados básicos, analgesia, sedación cuando esté indicada y acompañamiento integral.</div>
+        </div>
+        <div class="card">
+          <h2>Fichas interactivas</h2>
+          <p class="small">Haz clic en cada ficha para girarla.</p>
+          <div class="mini-grid">
+            <div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-face front"><span class="pill">Ética</span><h3>Autonomía</h3><p>Respeto a valores, preferencias y decisiones del paciente.</p></div><div class="flip-face back"><h3>Aplicación</h3><p>Integrar voluntad del paciente, directivas previas o representante legal en decisiones sobre soporte vital.</p></div></div></div>
+            <div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-face front"><span class="pill">Clínica</span><h3>No maleficencia</h3><p>Evitar intervenciones fútiles o dañinas.</p></div><div class="flip-face back"><h3>Aplicación</h3><p>Evaluar si RCP, vasopresores, intubación, diálisis, nutrición o transfusión ofrecen beneficio real.</p></div></div></div>
+            <div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-face front"><span class="pill">Familia</span><h3>Comunicación</h3><p>Información clara, oportuna y suficiente.</p></div><div class="flip-face back"><h3>Aplicación</h3><p>Preparar reuniones, usar lenguaje comprensible, validar emociones y evitar delegar la carga de la decisión en la familia.</p></div></div></div>
+            <div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-face front"><span class="pill">Registro</span><h3>Expediente</h3><p>La decisión debe documentarse por escrito.</p></div><div class="flip-face back"><h3>Aplicación</h3><p>Asentar pronóstico, nivel de clasificación, consentimiento, órdenes de no RCP/LET y plan paliativo.</p></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="flujo" class="panel">
+      <div class="content-grid">
+        <div class="card">
+          <h2>Flujo operativo sugerido</h2>
+          <div class="timeline">
+            <div class="step"><b>1. Identificación del caso</b><br>Durante el pase de visita se detectan pacientes con deterioro avanzado, irreversibilidad, enfermedad terminal, pronóstico fatal inmediato o necesidad de discusión ampliada del plan terapéutico.</div>
+            <div class="step"><b>2. Deliberación clínica</b><br>Se revisan diagnóstico, fisiología de órganos mayores, posibilidades de sobrevida, recuperación del estado previo, calidad de vida y proporcionalidad de las intervenciones.</div>
+            <div class="step"><b>3. Consenso del equipo</b><br>Participan médico tratante, interconsultantes, EMIRT, enfermería y personal directamente involucrado. Ante duda razonable, se puede continuar soporte o plantear tratamiento intensivo condicional.</div>
+            <div class="step"><b>4. Comunicación con paciente/familia</b><br>Se informa en lenguaje claro, se exploran valores y preferencias, se revisan voluntades anticipadas si existen y se busca acuerdo con familiares o representante legal.</div>
+            <div class="step"><b>5. Registro formal</b><br>Se documenta en expediente la clasificación, el pronóstico, la indicación de no RCP o LET, el consentimiento y las órdenes médicas específicas.</div>
+            <div class="step"><b>6. Plan paliativo activo</b><br>Se garantiza control de dolor, disnea, ansiedad, agitación, sedación si procede, cuidados básicos, apoyo emocional, familiar y espiritual.</div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Mapa de prioridad</h2>
+          <div class="chart">
+            <div class="bar" style="height:92%"><span>Muy alto</span><label>Confort</label></div>
+            <div class="bar" style="height:88%"><span>Muy alto</span><label>Dignidad</label></div>
+            <div class="bar" style="height:82%"><span>Alto</span><label>Consenso</label></div>
+            <div class="bar" style="height:78%"><span>Alto</span><label>Registro</label></div>
+            <div class="bar" style="height:70%"><span>Alto</span><label>Familia</label></div>
+          </div>
+          <p style="margin-top:45px">
+            Esta gráfica no representa datos epidemiológicos; funciona como visual ejecutivo para priorizar
+            los ejes del procedimiento: confort, dignidad, deliberación compartida, documentación y acompañamiento.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div id="niveles" class="panel">
+      <div class="card">
+        <h2>Clasificación clínica de pacientes</h2>
+        <input class="searchbar" id="searchLevels" onkeyup="filterTable()" placeholder="Buscar por nivel, conducta, RCP, pronóstico..." />
+        <div class="table-wrap">
+          <table id="levelsTable">
+            <thead><tr><th>Nivel</th><th>Perfil clínico</th><th>Conducta ante PCR</th><th>Punto crítico de decisión</th></tr></thead>
+            <tbody>
+              <tr><td><span class="tag">Nivel I</span></td><td>Pacientes en quienes se espera que el tratamiento sea satisfactorio y puedan egresar del hospital.</td><td>Iniciar maniobras de RCP si ocurre paro cardiorrespiratorio.</td><td>Soporte completo con expectativa razonable de recuperación.</td></tr>
+              <tr><td><span class="tag">Nivel II</span></td><td>Pronóstico aún desconocido, como escenarios de urgencias o información insuficiente.</td><td>Iniciar RCP hasta evidenciar fracaso o confirmar que corresponde a nivel III o IV.</td><td>Revaluación frecuente y búsqueda activa de información clínica/familiar.</td></tr>
+              <tr><td><span class="tag">Nivel III</span></td><td>Pronóstico fatal inmediato; no se espera que el tratamiento modifique la condición clínica.</td><td>No intento de RCP con base en criterios médicos documentados.</td><td>La indicación debe quedar clara en curso clínico y comunicarse a paciente/familia.</td></tr>
+              <tr><td><span class="tag">Nivel IV</span></td><td>Enfermedades crónicas/debilitantes o enfermedades amenazadoras de la vida sin muerte inminente.</td><td>Puede plantearse no RCP incorporando preferencias del paciente como elemento primordial.</td><td>Considerar voluntades anticipadas, valores, familia, representante legal y registro explícito.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="dominios" class="panel">
+      <div class="content-grid">
+        <div class="card">
+          <h2>7 dominios de calidad del tratamiento paliativo</h2>
+          <ol>
+            <li>Toma de decisiones centrada en el enfermo y su familia.</li>
+            <li>Comunicación dentro del equipo y con pacientes/familiares.</li>
+            <li>Continuidad del tratamiento.</li>
+            <li>Apoyo emocional y práctico para pacientes y familiares.</li>
+            <li>Tratamiento sintomático y bienestar.</li>
+            <li>Apoyo espiritual para pacientes y familias.</li>
+            <li>Apoyo emocional institucional para el paciente, la familia y los profesionales involucrados.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h2>Uso para capacitación</h2>
+          <p>
+            Estos dominios pueden convertirse en indicadores de auditoría interna: reuniones familiares
+            documentadas, registro de síntomas, evaluación de dolor/disnea, presencia de consentimiento,
+            revisión de órdenes médicas, intervención de psicología o tanatología, y seguimiento al equipo
+            cuando el caso genera carga emocional.
+          </p>
+          <div class="notice"><b>Recomendación visual:</b> usar estos dominios como matriz de evaluación mensual para identificar brechas entre el procedimiento escrito y la práctica clínica real.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="legal" class="panel">
+      <div class="content-grid">
+        <div class="card">
+          <h2>Marco legal integrado</h2>
+          <p>
+            El procedimiento se apoya en la Ley General de Salud, particularmente el Título Octavo Bis
+            sobre cuidados paliativos. El marco reconoce el derecho del paciente terminal a recibir atención
+            integral, información clara, consentimiento informado, alivio del dolor, rechazo de tratamientos
+            extraordinarios, cuidados paliativos y designación de representante.
+          </p>
+          <p>
+            También establece obligaciones para instituciones y médicos: proporcionar cuidados paliativos,
+            capacitar personal, pedir consentimiento informado, respetar la decisión del paciente, garantizar
+            cuidados básicos y no aplicar obstinación terapéutica ni medios extraordinarios sin consentimiento.
+          </p>
+        </div>
+        <div class="card">
+          <h2>Límites importantes</h2>
+          <ul>
+            <li>LET no equivale a eutanasia.</li>
+            <li>La sedación paliativa busca alivio del sufrimiento, no acelerar la muerte.</li>
+            <li>Los cuidados básicos no deben suspenderse.</li>
+            <li>La decisión debe documentarse y puede revocarse o modificarse si cambia el pronóstico o la voluntad.</li>
+            <li>En conflicto, se recomienda considerar al Comité de Ética y registrar sus recomendaciones.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="sedacion" class="panel">
+      <div class="content-grid">
+        <div class="card">
+          <h2>Sedación paliativa y sedación en agonía</h2>
+          <p>
+            La sedación paliativa consiste en disminuir el nivel de conciencia mediante fármacos en dosis
+            proporcionales para aliviar uno o más síntomas refractarios en pacientes sin expectativa curativa.
+            Puede ser superficial o profunda, intermitente o continua, y requiere consentimiento explícito,
+            implícito o delegado, según la situación clínica y la capacidad del paciente.
+          </p>
+          <p>
+            En la agonía, la sedación busca aliviar sufrimiento físico o psicológico inalcanzable con otras
+            medidas cuando la muerte se prevé próxima. El principio de doble efecto sostiene que la intención
+            ética debe ser aliviar el sufrimiento; la muerte ocurre por la enfermedad de base, no como finalidad
+            del acto médico.
+          </p>
+        </div>
+        <div class="card">
+          <h2>Diferencia con eutanasia</h2>
+          <table>
+            <thead><tr><th>Dimensión</th><th>Sedación paliativa</th><th>Eutanasia</th></tr></thead>
+            <tbody>
+              <tr><td>Intención</td><td>Aliviar sufrimiento refractario.</td><td>Provocar muerte.</td></tr>
+              <tr><td>Proceso</td><td>Dosis ajustadas a respuesta clínica y registro continuo.</td><td>Acto orientado a terminar la vida.</td></tr>
+              <tr><td>Resultado buscado</td><td>Disminuir percepción del sufrimiento.</td><td>Eliminar vida física.</td></tr>
+              <tr><td>Marco ético</td><td>Proporcionalidad y doble efecto.</td><td>Prohibida en el marco descrito por el documento.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="checklist" class="panel">
+      <div class="content-grid">
+        <div class="card">
+          <h2>Checklist operativo LET</h2>
+          <label><input type="checkbox"> Paciente identificado como terminal, irreversible o con soporte potencialmente fútil.</label><br><br>
+          <label><input type="checkbox"> Revisión durante pase de visita o reunión clínica.</label><br><br>
+          <label><input type="checkbox"> Participación de médico tratante, interconsultantes, EMIRT y equipo involucrado.</label><br><br>
+          <label><input type="checkbox"> Discusión de pronóstico, posibilidades de recuperación y calidad de vida.</label><br><br>
+          <label><input type="checkbox"> Búsqueda de voluntad del paciente o directivas previas.</label><br><br>
+          <label><input type="checkbox"> Comunicación con familia o representante legal.</label><br><br>
+          <label><input type="checkbox"> Consentimiento informado y órdenes médicas específicas.</label><br><br>
+          <label><input type="checkbox"> Plan de confort: analgesia, disnea, ansiedad, agitación, sedación si procede.</label><br><br>
+          <label><input type="checkbox"> Registro completo en expediente clínico.</label>
+        </div>
+        <div class="card">
+          <h2>Indicador sugerido para tablero real</h2>
+          <p>
+            El documento base propone el indicador “Limitación Esfuerzo Terapéutico en la UTI-UCC” con dimensión
+            de adecuación y satisfacción, unidad de medida porcentual y periodicidad mensual.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Indicador</th><th>Fórmula sugerida de seguimiento</th><th>Periodicidad</th></tr></thead>
+              <tbody>
+                <tr><td>Casos LET documentados</td><td>Casos LET con registro completo / total de casos LET × 100</td><td>Mensual</td></tr>
+                <tr><td>Consentimiento presente</td><td>Casos con consentimiento / casos LET × 100</td><td>Mensual</td></tr>
+                <tr><td>Reunión familiar documentada</td><td>Casos con nota de comunicación / casos LET × 100</td><td>Mensual</td></tr>
+                <tr><td>Plan paliativo activo</td><td>Casos con manejo de confort documentado / casos LET × 100</td><td>Mensual</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="small">Estos indicadores se presentan como propuesta visual-operativa para control interno; no sustituyen el indicador institucional formal.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <h2 style="color:var(--ha-blue);margin-top:0">Referencias bibliográficas</h2>
+    <div class="references">
+      <p><b>Documento institucional base:</b> Hospital Ángeles Lomas. (2017). <i>Manual de Políticas y Procedimientos de la Unidad de Terapia Intensiva: Aplicación del procedimiento de Limitación del Esfuerzo Terapéutico (LET) en la UTI-UCC/UCI</i> (Revisión 2, Código MP-DSC-UTI-LET-01).</p>
+      <p><b>Referencias citadas dentro del documento:</b> Ley General de Salud, Título Octavo Bis, Artículos 166 Bis; Institute for Clinical Systems Improvement. (2009). <i>Palliative Care</i>; World Health Organization. (2007); Guía de Práctica Clínica sobre Cuidados Paliativos. (2008); Society of Critical Care Medicine; Hastings Center; SEMICYUC.</p>
+      <p class="small">Tablero elaborado con fines académicos/operativos a partir del procedimiento LET del Hospital Ángeles Lomas. Verificar vigencia normativa e institucional antes de uso formal.</p>
+    </div>
+  </footer>
+</div>
+
+<script>
+function openTab(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const tabs=[...document.querySelectorAll('.tab')];
+  const map={resumen:0,flujo:1,niveles:2,dominios:3,legal:4,sedacion:5,checklist:6};
+  if(tabs[map[id]]) tabs[map[id]].classList.add('active');
+}
+function filterTable(){
+  const input=document.getElementById("searchLevels").value.toLowerCase();
+  const rows=document.querySelectorAll("#levelsTable tbody tr");
+  rows.forEach(row=>{
+    row.style.display=row.textContent.toLowerCase().includes(input) ? "" : "none";
+  });
+}
+</script>
+</body>
+</html>
